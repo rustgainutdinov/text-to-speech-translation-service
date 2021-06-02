@@ -3,36 +3,36 @@ package domain
 import "github.com/google/uuid"
 
 type TranslationService interface {
-	AddTextToSpeechTranslation(text string) (uuid.UUID, error)
-	TranslateTextToSpeech(id TranslationTextToSpeechID) error
+	AddTranslation(text string, userID uuid.UUID) (TranslationID, error)
+	Translate(id TranslationID) error
 }
 
 type translationService struct {
 	translationQueue            TranslationQueue
 	textToSpeechService         TextToSpeechService
-	translationTextToSpeechRepo TranslationTextToSpeechRepo
+	translationTextToSpeechRepo TranslationRepo
 }
 
-func (t *translationService) AddTextToSpeechTranslation(text string) (uuid.UUID, error) {
-	translationID := uuid.New()
-	translation := TranslationTextToSpeech{
-		ID:     TranslationTextToSpeechID(translationID),
+func (t *translationService) AddTranslation(text string, userID uuid.UUID) (TranslationID, error) {
+	translationID := TranslationID(uuid.New())
+	translation := Translation{
+		ID:     translationID,
+		UserID: userID,
 		Text:   text,
 		Status: TranslationStatusWaiting,
 	}
 	err := t.translationTextToSpeechRepo.Store(translation)
 	if err != nil {
-		return uuid.UUID{}, err
+		return TranslationID{}, err
 	}
-	t.translationQueue.AddJob(Task{
-		TaskType: TaskTypeSpeechToTextTranslation,
-		ID:       TaskID(uuid.New()),
-		Data:     nil,
+	t.translationQueue.AddTask(Task{
+		TranslationID: translationID,
+		Text:          text,
 	})
 	return translationID, nil
 }
 
-func (t *translationService) TranslateTextToSpeech(id TranslationTextToSpeechID) error {
+func (t *translationService) Translate(id TranslationID) error {
 	translation, err := t.translationTextToSpeechRepo.FindOne(id)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (t *translationService) TranslateTextToSpeech(id TranslationTextToSpeechID)
 	return err2
 }
 
-func NewTranslationService(translationQueue TranslationQueue, translationTextToSpeechRepo TranslationTextToSpeechRepo, textToSpeechService TextToSpeechService) TranslationService {
+func NewTranslationService(translationQueue TranslationQueue, translationTextToSpeechRepo TranslationRepo, textToSpeechService TextToSpeechService) TranslationService {
 	return &translationService{
 		translationQueue:            translationQueue,
 		translationTextToSpeechRepo: translationTextToSpeechRepo,

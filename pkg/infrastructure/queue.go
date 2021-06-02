@@ -3,49 +3,38 @@ package infrastructure
 import (
 	"context"
 	"fmt"
+	"text-to-speech-translation-service/pkg/domain"
 	"time"
 )
 
 type queue struct {
-	in   chan interface{}
-	stop chan struct{}
-	ctx  context.Context
+	in  chan domain.Task
+	ctx context.Context
 }
 
-func (s queue) AddTask(msg interface{}) {
-	go func() {
-		s.in <- msg
-	}()
+func (s *queue) AddTask(task domain.Task) {
+	s.in <- task
 }
 
-func (s queue) Close() {
-	close(s.stop)
-}
-
-func (s queue) start() {
+func (s *queue) Start() {
 	for {
 		select {
-		case msg := <-s.in:
+		case task := <-s.in:
 			{
-				fmt.Println(msg)
-			}
-		case <-s.stop:
-			{
-				close(s.in)
-				return
+				fmt.Println(task.Text)
+				time.Sleep(3 * time.Second)
 			}
 		default:
 			fmt.Println("default")
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
 
-func NewQueue() queue {
+func NewQueue() domain.TranslationQueue {
 	sub := queue{
-		in:   make(chan interface{}),
-		stop: make(chan struct{}),
-		ctx:  context.Background(),
+		in:  make(chan domain.Task),
+		ctx: context.Background(),
 	}
-	return sub
+	return &sub
 }

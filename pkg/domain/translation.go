@@ -13,15 +13,16 @@ const (
 
 var ErrTranslationIsNotFound = fmt.Errorf("translation is not found")
 
-type TranslationTextToSpeechRepo interface {
-	Store(translation TranslationTextToSpeech) error
-	FindOne(translationID TranslationTextToSpeechID) (TranslationTextToSpeech, error)
+type TranslationRepo interface {
+	Store(translation Translation) error
+	FindOne(translationID TranslationID) (Translation, error)
 }
 
-type TranslationTextToSpeechID uuid.UUID
+type TranslationID uuid.UUID
 
-type TranslationTextToSpeech struct {
-	ID         TranslationTextToSpeechID
+type Translation struct {
+	ID         TranslationID
+	UserID     uuid.UUID
 	Text       string
 	Status     int
 	SpeechData string
