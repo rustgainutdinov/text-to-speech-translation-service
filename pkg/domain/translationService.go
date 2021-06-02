@@ -1,19 +1,32 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+	"github.com/google/uuid"
+)
 
 type TranslationService interface {
 	AddTranslation(text string, userID uuid.UUID) (TranslationID, error)
 	Translate(id TranslationID) error
 }
 
+var ErrThereAreNotEnoughSymbolsToWriteOff = fmt.Errorf("there are not enough symbols to write off")
+
 type translationService struct {
 	translationQueue            TranslationQueue
 	textToSpeechService         TextToSpeechService
 	translationTextToSpeechRepo TranslationRepo
+	balanceService              BalanceService
 }
 
 func (t *translationService) AddTranslation(text string, userID uuid.UUID) (TranslationID, error) {
+	res, err := t.balanceService.CanWriteOf(userID, len(text))
+	if err != nil {
+		return TranslationID{}, err
+	}
+	if !res {
+		return TranslationID{}, ErrThereAreNotEnoughSymbolsToWriteOff
+	}
 	translationID := TranslationID(uuid.New())
 	translation := Translation{
 		ID:     translationID,
@@ -21,7 +34,7 @@ func (t *translationService) AddTranslation(text string, userID uuid.UUID) (Tran
 		Text:   text,
 		Status: TranslationStatusWaiting,
 	}
-	err := t.translationTextToSpeechRepo.Store(translation)
+	err = t.translationTextToSpeechRepo.Store(translation)
 	if err != nil {
 		return TranslationID{}, err
 	}
@@ -49,10 +62,11 @@ func (t *translationService) Translate(id TranslationID) error {
 	return err2
 }
 
-func NewTranslationService(translationQueue TranslationQueue, translationTextToSpeechRepo TranslationRepo, textToSpeechService TextToSpeechService) TranslationService {
+func NewTranslationService(translationQueue TranslationQueue, translationTextToSpeechRepo TranslationRepo, textToSpeechService TextToSpeechService, balanceService BalanceService) TranslationService {
 	return &translationService{
 		translationQueue:            translationQueue,
 		translationTextToSpeechRepo: translationTextToSpeechRepo,
 		textToSpeechService:         textToSpeechService,
+		balanceService:              balanceService,
 	}
 }

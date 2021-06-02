@@ -10,7 +10,7 @@ const mockTranslationSpeechToText = "ya perevel"
 
 func TestTranslationService_AddTextToSpeechTranslation(t *testing.T) {
 	repo := mockTranslationTextToSpeechRepo{}
-	translationService := NewTranslationService(&mockTranslationQueue{}, &repo, &mockTextToSpeechService{})
+	translationService := NewTranslationService(&mockTranslationQueue{}, &repo, &mockTextToSpeechService{}, &mockBalanceService{})
 	textToTranslate := "Hello, world"
 	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
 	assert.Nil(t, err)
@@ -22,7 +22,7 @@ func TestTranslationService_AddTextToSpeechTranslation(t *testing.T) {
 
 func TestTranslationService_TranslateTextToSpeech(t *testing.T) {
 	repo := mockTranslationTextToSpeechRepo{}
-	translationService := NewTranslationService(&mockTranslationQueue{}, &repo, &mockTextToSpeechService{})
+	translationService := NewTranslationService(&mockTranslationQueue{}, &repo, &mockTextToSpeechService{}, &mockBalanceService{})
 	textToTranslate := "Hello, world"
 	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
 	assert.Nil(t, err)
@@ -67,5 +67,12 @@ func (t *mockTextToSpeechService) Translate(text string) (string, error) {
 
 type mockTranslationQueue struct{}
 
-func (t *mockTranslationQueue) AddTask(task Task) {
+func (t *mockTranslationQueue) AddTask(task Task) {}
+
+func (t *mockTranslationQueue) Start() {}
+
+type mockBalanceService struct{}
+
+func (t *mockBalanceService) CanWriteOf(userID uuid.UUID, amountOfSymbols int) (bool, error) {
+	return true, nil
 }
