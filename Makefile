@@ -1,4 +1,13 @@
-all:
+all: build test check
+modules:
+	go mod tidy
+build:
+	go build -o ./bin/translationservice ./cmd/main.go
+test:
+	go test ./...
+check:
+	golangci-lint run
+generate-grpc:
 		protoc -I/usr/local/include -I. \
 			-I${GOPATH}/src \
 			-I${GOPATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.16.0/third_party/googleapis \
