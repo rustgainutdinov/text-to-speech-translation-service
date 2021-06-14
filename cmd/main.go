@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
@@ -30,12 +32,22 @@ func run() error {
 }
 
 func runGRPCService(serviceAddr string) error {
+	envConf, err := infrastructure.ParseEnv()
+	if err != nil {
+		return err
+	}
+	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s port=%s host=%s sslmode=disable", envConf.DBUser, envConf.DBPass, envConf.DBName, envConf.DBPort, envConf.DBHost)
+	db, err := sqlx.Open("postgres", dbInfo)
+	if err != nil {
+		return err
+	}
+	dependencyContainer := infrastructure.NewDependencyContainer(db, *envConf)
 	lis, err := net.Listen("tcp", serviceAddr)
 	if err != nil {
 		return err
 	}
 	server := grpc.NewServer()
-	api.RegisterTranslationServiceServer(server, &infrastructure.TranslationServer{})
+	api.RegisterTranslationServiceServer(server, &infrastructure.TranslationServer{DependencyContainer: dependencyContainer})
 	fmt.Println("starting grpc server at " + serviceAddr)
 	return server.Serve(lis)
 }

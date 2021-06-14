@@ -10,7 +10,7 @@ const mockTranslationSpeechToText = "ya perevel"
 
 func TestTranslationService_AddTextToSpeechTranslation(t *testing.T) {
 	repo := mockTranslationTextToSpeechRepo{}
-	translationService := NewTranslationService(&mockTranslationQueue{}, &repo, &mockTextToSpeechService{}, &mockBalanceService{})
+	translationService := NewTranslationManager(&mockTranslationQueue{}, &repo, &mockBalanceService{})
 	textToTranslate := "Hello, world"
 	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
 	assert.Nil(t, err)
@@ -22,11 +22,12 @@ func TestTranslationService_AddTextToSpeechTranslation(t *testing.T) {
 
 func TestTranslationService_TranslateTextToSpeech(t *testing.T) {
 	repo := mockTranslationTextToSpeechRepo{}
-	translationService := NewTranslationService(&mockTranslationQueue{}, &repo, &mockTextToSpeechService{}, &mockBalanceService{})
+	translationService := NewTranslationManager(&mockTranslationQueue{}, &repo, &mockBalanceService{})
 	textToTranslate := "Hello, world"
 	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
 	assert.Nil(t, err)
-	err = translationService.Translate(translationID)
+	textToSpeechService := NewTextToSpeechService(&repo, &mockExternalTextToSpeech{})
+	err = textToSpeechService.Translate(translationID)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(repo.translations))
 	translation, err := repo.FindOne(translationID)
@@ -59,9 +60,9 @@ func (m *mockTranslationTextToSpeechRepo) FindOne(translationID TranslationID) (
 	return Translation{}, ErrTranslationIsNotFound
 }
 
-type mockTextToSpeechService struct{}
+type mockExternalTextToSpeech struct{}
 
-func (t *mockTextToSpeechService) Translate(text string) (string, error) {
+func (t *mockExternalTextToSpeech) Translate(text string) (string, error) {
 	return mockTranslationSpeechToText, nil
 }
 

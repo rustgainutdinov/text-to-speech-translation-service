@@ -8,33 +8,40 @@ import (
 )
 
 type queue struct {
-	in  chan domain.Task
-	ctx context.Context
+	in                  chan domain.Task
+	ctx                 context.Context
+	textToSpeechService domain.TextToSpeechService
 }
 
 func (s *queue) AddTask(task domain.Task) {
+	fmt.Println("task added")
 	s.in <- task
 }
 
 func (s *queue) Start() {
+	fmt.Println("queue started")
 	for {
 		select {
 		case task := <-s.in:
 			{
-				fmt.Println(task.Text)
-				time.Sleep(3 * time.Second)
+				err := s.textToSpeechService.Translate(task.TranslationID)
+				if err != nil {
+					fmt.Println(err)
+				}
+				time.Sleep(10 * time.Second)
 			}
 		default:
-			fmt.Println("default")
 			time.Sleep(1 * time.Second)
 		}
 	}
 }
 
-func NewQueue() domain.TranslationQueue {
-	sub := queue{
-		in:  make(chan domain.Task),
-		ctx: context.Background(),
+func NewQueue(textToSpeechService domain.TextToSpeechService) domain.TranslationQueue {
+	q := queue{
+		in:                  make(chan domain.Task),
+		ctx:                 context.Background(),
+		textToSpeechService: textToSpeechService,
 	}
-	return &sub
+	go q.Start()
+	return &q
 }

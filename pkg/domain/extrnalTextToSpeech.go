@@ -1,5 +1,5 @@
 package domain
 
-type TextToSpeechService interface {
+type ExternalTextToSpeech interface {
 	Translate(text string) (string, error)
 }
