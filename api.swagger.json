@@ -11,7 +11,7 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/translate": {
+    "/api/v1/translation/add": {
       "post": {
         "operationId": "TranslationService_Translate",
         "responses": {

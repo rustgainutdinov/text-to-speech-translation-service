@@ -319,7 +319,7 @@ func RegisterTranslationServiceHandlerClient(ctx context.Context, mux *runtime.S
 }
 
 var (
-	pattern_TranslationService_Translate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "translate"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TranslationService_Translate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "translation", "add"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_TranslationService_GetTranslationStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "translation", "status"}, "", runtime.AssumeColonVerbOpt(true)))
 
