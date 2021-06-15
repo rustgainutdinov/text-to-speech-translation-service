@@ -17,7 +17,7 @@ type DependencyContainer interface {
 
 type dependencyContainer struct {
 	db               *sqlx.DB
-	envConf          config
+	envConf          Config
 	translationQueue domain.TranslationQueue
 }
 
@@ -38,14 +38,14 @@ func (d *dependencyContainer) newTranslationQueue() domain.TranslationQueue {
 }
 
 func (d *dependencyContainer) newBalanceService() domain.BalanceService {
-	return NewBalanceService()
+	return NewBalanceService(d.envConf.BalanceServiceAddress)
 }
 
 func (d *dependencyContainer) newExternalTextToSpeechService() domain.ExternalTextToSpeech {
 	return NewExternalTextToSpeechService()
 }
 
-func NewDependencyContainer(db *sqlx.DB, envConf config) DependencyContainer {
+func NewDependencyContainer(db *sqlx.DB, envConf Config) DependencyContainer {
 	d := dependencyContainer{db: db, envConf: envConf}
 	d.translationQueue = NewQueue(domain.NewTextToSpeechService(d.newTranslationRepo(), d.newExternalTextToSpeechService()))
 	return &d

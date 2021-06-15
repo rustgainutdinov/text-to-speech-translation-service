@@ -13,9 +13,6 @@ import (
 	"text-to-speech-translation-service/pkg/infrastructure"
 )
 
-const httpProxyPort = ":8010"
-const serviceAddr = "127.0.0.1:8011"
-
 func main() {
 	if err := run(); err != nil {
 		fmt.Println(err.Error())
@@ -23,32 +20,32 @@ func main() {
 }
 
 func run() error {
-	go func() {
-		if err := runGRPCService(serviceAddr); err != nil {
-			fmt.Println(err.Error())
-		}
-	}()
-	return runHTTPProxy(serviceAddr, httpProxyPort)
-}
-
-func runGRPCService(serviceAddr string) error {
 	envConf, err := infrastructure.ParseEnv()
 	if err != nil {
 		return err
 	}
+	go func() {
+		if err := runGRPCService(envConf); err != nil {
+			fmt.Println(err.Error())
+		}
+	}()
+	return runHTTPProxy(envConf.GRPCAddress, envConf.HTTPProxyAddress)
+}
+
+func runGRPCService(envConf *infrastructure.Config) error {
 	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s port=%s host=%s sslmode=disable", envConf.DBUser, envConf.DBPass, envConf.DBName, envConf.DBPort, envConf.DBHost)
 	db, err := sqlx.Open("postgres", dbInfo)
 	if err != nil {
 		return err
 	}
 	dependencyContainer := infrastructure.NewDependencyContainer(db, *envConf)
-	lis, err := net.Listen("tcp", serviceAddr)
+	lis, err := net.Listen("tcp", envConf.GRPCAddress)
 	if err != nil {
 		return err
 	}
 	server := grpc.NewServer()
 	api.RegisterTranslationServiceServer(server, &infrastructure.TranslationServer{DependencyContainer: dependencyContainer})
-	fmt.Println("starting grpc server at " + serviceAddr)
+	fmt.Println("starting grpc server at " + envConf.GRPCAddress)
 	return server.Serve(lis)
 }
 

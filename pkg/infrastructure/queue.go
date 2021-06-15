@@ -14,7 +14,6 @@ type queue struct {
 }
 
 func (s *queue) AddTask(task domain.Task) {
-	fmt.Println("task added")
 	s.in <- task
 }
 

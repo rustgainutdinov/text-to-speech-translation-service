@@ -1,10 +1,5 @@
 package domain
 
-import (
-	"fmt"
-	"github.com/google/uuid"
-)
-
 type TextToSpeechService interface {
 	Translate(id TranslationID) error
 }
@@ -15,7 +10,6 @@ type textToSpeechService struct {
 }
 
 func (t *textToSpeechService) Translate(id TranslationID) error {
-	fmt.Printf("translate %v\n", uuid.UUID(id).String())
 	translation, err := t.translationTextToSpeechRepo.FindOne(id)
 	if err != nil {
 		return err
