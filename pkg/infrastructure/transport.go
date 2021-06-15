@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"text-to-speech-translation-service/api"
+	"text-to-speech-translation-service/pkg/domain"
 )
 
 type TranslationServer struct {
@@ -23,9 +24,38 @@ func (t *TranslationServer) Translate(_ context.Context, req *api.TranslationReq
 }
 
 func (t *TranslationServer) GetTranslationStatus(_ context.Context, req *api.TranslationID) (*api.TranslationStatus, error) {
-	return &api.TranslationStatus{TranslationStatus: api.TranslationStatusEnum_SUCCESS}, nil
+	translationID, err := uuid.Parse(req.TranslationID)
+	if err != nil {
+		return nil, err
+	}
+	status, err := t.DependencyContainer.newAppTranslationService().GetTranslationStatus(translationID)
+	if err != nil {
+		return nil, err
+	}
+	return &api.TranslationStatus{TranslationStatus: convertDomainStatusToAPI(status)}, err
 }
 
 func (t *TranslationServer) GetTranslationData(_ context.Context, req *api.TranslationID) (*api.TranslationData, error) {
-	return &api.TranslationData{Text: "some text"}, nil
+	translationID, err := uuid.Parse(req.TranslationID)
+	if err != nil {
+		return nil, err
+	}
+	translatedData, err := t.DependencyContainer.newAppTranslationService().GetTranslationData(translationID)
+	if err != nil {
+		return nil, err
+	}
+	return &api.TranslationData{Text: translatedData}, nil
+}
+
+func convertDomainStatusToAPI(domainStatus int) api.TranslationStatusEnum {
+	switch domainStatus {
+	case domain.TranslationStatusWaiting:
+		return api.TranslationStatusEnum_WAITING
+	case domain.TranslationStatusSuccess:
+		return api.TranslationStatusEnum_SUCCESS
+	case domain.TranslationStatusError:
+		return api.TranslationStatusEnum_ERROR
+	default:
+		return api.TranslationStatusEnum_ERROR
+	}
 }

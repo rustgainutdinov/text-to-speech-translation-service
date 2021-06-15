@@ -13,6 +13,7 @@ type DependencyContainer interface {
 	newTranslationQueue() domain.TranslationQueue
 	newBalanceService() domain.BalanceService
 	newExternalTextToSpeechService() domain.ExternalTextToSpeech
+	newTranslationQueryService() app.TranslationQueryService
 }
 
 type dependencyContainer struct {
@@ -22,7 +23,7 @@ type dependencyContainer struct {
 }
 
 func (d *dependencyContainer) newAppTranslationService() app.TranslationService {
-	return app.NewTranslationService(d.newTranslationRepo(), d.newTranslationQueue(), d.newBalanceService())
+	return app.NewTranslationService(d.newTranslationRepo(), d.newTranslationQueue(), d.newBalanceService(), d.newTranslationQueryService())
 }
 
 func (d *dependencyContainer) newDomainTextToSpeechService() domain.TextToSpeechService {
@@ -43,6 +44,10 @@ func (d *dependencyContainer) newBalanceService() domain.BalanceService {
 
 func (d *dependencyContainer) newExternalTextToSpeechService() domain.ExternalTextToSpeech {
 	return NewExternalTextToSpeechService()
+}
+
+func (d *dependencyContainer) newTranslationQueryService() app.TranslationQueryService {
+	return NewTranslationQueryService(d.db)
 }
 
 func NewDependencyContainer(db *sqlx.DB, envConf Config) DependencyContainer {
