@@ -18,7 +18,7 @@ func (s *queue) AddTask(task domain.Task) {
 }
 
 func (s *queue) Start() {
-	fmt.Println("queue started")
+	fmt.Println("channel started")
 	for {
 		select {
 		case task := <-s.in:

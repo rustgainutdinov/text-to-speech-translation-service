@@ -7,6 +7,7 @@ type TextToSpeechService interface {
 type textToSpeechService struct {
 	translationTextToSpeechRepo TranslationRepo
 	externalTextToSpeech        ExternalTextToSpeech
+	externalEventBroker         ExternalEventBroker
 }
 
 func (t *textToSpeechService) Translate(id TranslationID) error {
@@ -19,16 +20,17 @@ func (t *textToSpeechService) Translate(id TranslationID) error {
 	if err != nil {
 		translation.Status = TranslationStatusError
 	}
-	err2 := t.translationTextToSpeechRepo.Store(translation)
+	err = t.translationTextToSpeechRepo.Store(translation)
 	if err != nil {
 		return err
 	}
-	return err2
+	return t.externalEventBroker.TextTranslated(translation.UserID, len(translation.Text))
 }
 
-func NewTextToSpeechService(translationTextToSpeechRepo TranslationRepo, externalTextToSpeech ExternalTextToSpeech) TextToSpeechService {
+func NewTextToSpeechService(translationTextToSpeechRepo TranslationRepo, externalTextToSpeech ExternalTextToSpeech, externalEventBroker ExternalEventBroker) TextToSpeechService {
 	return &textToSpeechService{
 		translationTextToSpeechRepo: translationTextToSpeechRepo,
 		externalTextToSpeech:        externalTextToSpeech,
+		externalEventBroker:         externalEventBroker,
 	}
 }

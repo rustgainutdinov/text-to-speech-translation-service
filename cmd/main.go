@@ -6,6 +6,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
@@ -38,7 +39,11 @@ func runGRPCService(envConf *infrastructure.Config) error {
 	if err != nil {
 		return err
 	}
-	dependencyContainer := infrastructure.NewDependencyContainer(db, *envConf)
+	rabbitMqChannel, err := getRabbitMqChannel(envConf)
+	if err != nil {
+		return err
+	}
+	dependencyContainer := infrastructure.NewDependencyContainer(db, *envConf, rabbitMqChannel)
 	lis, err := net.Listen("tcp", envConf.GRPCAddress)
 	if err != nil {
 		return err
@@ -47,6 +52,15 @@ func runGRPCService(envConf *infrastructure.Config) error {
 	api.RegisterTranslationServiceServer(server, &infrastructure.TranslationServer{DependencyContainer: dependencyContainer})
 	fmt.Println("starting grpc server at " + envConf.GRPCAddress)
 	return server.Serve(lis)
+}
+
+func getRabbitMqChannel(envConf *infrastructure.Config) (*amqp.Channel, error) {
+	rabbitMqInfo := fmt.Sprintf("amqp://%s:%s@%s//", envConf.RabbitMqUser, envConf.RabbitMqPass, envConf.RabbitMqHost)
+	conn, err := amqp.Dial(rabbitMqInfo)
+	if err != nil {
+		return nil, err
+	}
+	return conn.Channel()
 }
 
 func runHTTPProxy(serviceAddr string, httpProxyPort string) error {

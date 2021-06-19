@@ -13,6 +13,9 @@ type Config struct {
 	DBPort                string `envconfig:"db_port"`
 	DBPass                string `envconfig:"db_pass"`
 	DBHost                string `envconfig:"db_host"`
+	RabbitMqUser          string `envconfig:"rabbitmq_user"`
+	RabbitMqPass          string `envconfig:"rabbitmq_pass"`
+	RabbitMqHost          string `envconfig:"rabbitmq_host"`
 }
 
 func ParseEnv() (*Config, error) {

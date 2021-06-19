@@ -26,7 +26,7 @@ func TestTranslationService_TranslateTextToSpeech(t *testing.T) {
 	textToTranslate := "Hello, world"
 	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
 	assert.Nil(t, err)
-	textToSpeechService := NewTextToSpeechService(&repo, &mockExternalTextToSpeech{})
+	textToSpeechService := NewTextToSpeechService(&repo, &mockExternalTextToSpeech{}, &mockExternalEventBroker{})
 	err = textToSpeechService.Translate(translationID)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(repo.translations))
@@ -76,4 +76,10 @@ type mockBalanceService struct{}
 
 func (t *mockBalanceService) CanWriteOf(userID uuid.UUID, amountOfSymbols int) (bool, error) {
 	return true, nil
+}
+
+type mockExternalEventBroker struct{}
+
+func (t *mockExternalEventBroker) TextTranslated(userID uuid.UUID, amountOfSymbols int) error {
+	return nil
 }
