@@ -35,11 +35,12 @@ func (b *translationService) Translate(userID uuid.UUID, text string) (uuid.UUID
 		if err != nil {
 			return err
 		}
-		b.translationQueue.AddTask(Task{
-			TranslationID: uuid.UUID(translationID),
-			Text:          text,
-		})
 		return nil
+	})
+	//TODO: внести добавление в очередь в транзакцию, либо проставлять ошибочный статус при ошиьке добавления в очередь
+	b.translationQueue.AddTask(Task{
+		TranslationID: uuid.UUID(translationID),
+		Text:          text,
 	})
 	return uuid.UUID(translationID), nil
 }

@@ -31,10 +31,11 @@ func (t *textToSpeechService) Translate(id uuid.UUID) error {
 	})
 }
 
-func NewTextToSpeechService(unitOfWorkFactory UnitOfWorkFactory, externalTextToSpeech ExternalTextToSpeech, externalEventBroker ExternalEventBroker) TextToSpeechService {
+func NewTextToSpeechService(unitOfWorkFactory UnitOfWorkFactory, externalTextToSpeech ExternalTextToSpeech, externalEventBroker ExternalEventBroker, translationQueryService TranslationQueryService) TextToSpeechService {
 	return &textToSpeechService{
-		unitOfWorkFactory:    unitOfWorkFactory,
-		externalTextToSpeech: externalTextToSpeech,
-		externalEventBroker:  externalEventBroker,
+		unitOfWorkFactory:       unitOfWorkFactory,
+		externalTextToSpeech:    externalTextToSpeech,
+		externalEventBroker:     externalEventBroker,
+		translationQueryService: translationQueryService,
 	}
 }

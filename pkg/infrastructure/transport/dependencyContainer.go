@@ -57,6 +57,6 @@ func (d *dependencyContainer) newExternalEventBroker() app.ExternalEventBroker {
 
 func NewDependencyContainer(db pg.DBI, envConf Config, rabbitMqChannel *amqp.Channel) DependencyContainer {
 	d := dependencyContainer{db: db, envConf: envConf, rabbitMqChannel: rabbitMqChannel, unitOfWorkFactory: &postgres.UnitOfWorkFactory{Client: db}}
-	d.translationQueue = queue.NewQueue(app.NewTextToSpeechService(d.unitOfWorkFactory, d.newExternalTextToSpeechService(), d.newExternalEventBroker()))
+	d.translationQueue = queue.NewQueue(app.NewTextToSpeechService(d.unitOfWorkFactory, d.newExternalTextToSpeechService(), d.newExternalEventBroker(), d.newTranslationQueryService()))
 	return &d
 }
