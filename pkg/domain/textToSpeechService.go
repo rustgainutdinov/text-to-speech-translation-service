@@ -5,32 +5,35 @@ type TextToSpeechService interface {
 }
 
 type textToSpeechService struct {
-	translationTextToSpeechRepo TranslationRepo
-	externalTextToSpeech        ExternalTextToSpeech
-	externalEventBroker         ExternalEventBroker
+	unitOfWorkFactory    UnitOfWorkFactory
+	externalTextToSpeech ExternalTextToSpeech
+	externalEventBroker  ExternalEventBroker
 }
 
 func (t *textToSpeechService) Translate(id TranslationID) error {
-	translation, err := t.translationTextToSpeechRepo.FindOne(id)
-	if err != nil {
-		return err
-	}
-	translation.SpeechData, err = t.externalTextToSpeech.Translate(translation.Text)
-	translation.Status = TranslationStatusSuccess
-	if err != nil {
-		translation.Status = TranslationStatusError
-	}
-	err = t.translationTextToSpeechRepo.Store(translation)
-	if err != nil {
-		return err
-	}
-	return t.externalEventBroker.TextTranslated(translation.UserID, len(translation.Text))
+	return t.unitOfWorkFactory.NewUnitOfWork(func(provider RepositoryProvider) error {
+		translationRepo := provider.TranslationRepo()
+		translation, err := translationRepo.FindOne(id)
+		if err != nil {
+			return err
+		}
+		translation.SpeechData, err = t.externalTextToSpeech.Translate(translation.Text)
+		translation.Status = TranslationStatusSuccess
+		if err != nil {
+			translation.Status = TranslationStatusError
+		}
+		err = translationRepo.Store(translation)
+		if err != nil {
+			return err
+		}
+		return t.externalEventBroker.TextTranslated(translation.UserID, len(translation.Text))
+	})
 }
 
-func NewTextToSpeechService(translationTextToSpeechRepo TranslationRepo, externalTextToSpeech ExternalTextToSpeech, externalEventBroker ExternalEventBroker) TextToSpeechService {
+func NewTextToSpeechService(unitOfWorkFactory UnitOfWorkFactory, externalTextToSpeech ExternalTextToSpeech, externalEventBroker ExternalEventBroker) TextToSpeechService {
 	return &textToSpeechService{
-		translationTextToSpeechRepo: translationTextToSpeechRepo,
-		externalTextToSpeech:        externalTextToSpeech,
-		externalEventBroker:         externalEventBroker,
+		unitOfWorkFactory:    unitOfWorkFactory,
+		externalTextToSpeech: externalTextToSpeech,
+		externalEventBroker:  externalEventBroker,
 	}
 }

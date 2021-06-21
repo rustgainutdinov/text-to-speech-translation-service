@@ -74,12 +74,12 @@ func (t *mockTranslationQueue) Start() {}
 
 type mockBalanceService struct{}
 
-func (t *mockBalanceService) CanWriteOf(userID uuid.UUID, amountOfSymbols int) (bool, error) {
+func (t *mockBalanceService) CanWriteOf(userID uuid.UUID, score int) (bool, error) {
 	return true, nil
 }
 
 type mockExternalEventBroker struct{}
 
-func (t *mockExternalEventBroker) TextTranslated(userID uuid.UUID, amountOfSymbols int) error {
+func (t *mockExternalEventBroker) TextTranslated(userID uuid.UUID, score int) error {
 	return nil
 }

@@ -1,14 +1,15 @@
-package infrastructure
+package queue
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"testing"
 	"text-to-speech-translation-service/pkg/domain"
 	"time"
 )
 
 func TestQueue_AddTask(t *testing.T) {
-	textToSpeechService := domain.NewTextToSpeechService(&mockTranslationTextToSpeechRepo{}, &mockExternalTextToSpeech{})
+	textToSpeechService := domain.NewTextToSpeechService(&mockTranslationTextToSpeechRepo{}, &mockExternalTextToSpeech{}, &mockExternalEventBroker{})
 	queue := NewQueue(textToSpeechService)
 	go func() {
 		time.Sleep(time.Second * 2)
@@ -48,4 +49,10 @@ func (m *mockTranslationTextToSpeechRepo) Store(translation domain.Translation) 
 
 func (m *mockTranslationTextToSpeechRepo) FindOne(translationID domain.TranslationID) (domain.Translation, error) {
 	return domain.Translation{}, nil
+}
+
+type mockExternalEventBroker struct{}
+
+func (t *mockExternalEventBroker) TextTranslated(userID uuid.UUID, score int) error {
+	return nil
 }

@@ -12,14 +12,14 @@ type TranslationService interface {
 }
 
 type translationService struct {
-	translationRepo         domain.TranslationRepo
+	unitOfWorkFactory       domain.UnitOfWorkFactory
 	translationQueue        domain.TranslationQueue
 	balanceService          domain.BalanceService
 	translationQueryService TranslationQueryService
 }
 
 func (b *translationService) Translate(userID uuid.UUID, text string) (uuid.UUID, error) {
-	translationID, err := domain.NewTranslationManager(b.translationQueue, b.translationRepo, b.balanceService).AddTranslation(text, userID)
+	translationID, err := domain.NewTranslationManager(b.translationQueue, b.unitOfWorkFactory, b.balanceService).AddTranslation(text, userID)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -42,9 +42,9 @@ func (b *translationService) GetTranslationStatus(translationID uuid.UUID) (int,
 	return translationDTO.Status(), nil
 }
 
-func NewTranslationService(translationRepo domain.TranslationRepo, translationQueue domain.TranslationQueue, balanceService domain.BalanceService, translationQueryService TranslationQueryService) TranslationService {
+func NewTranslationService(unitOfWorkFactory domain.UnitOfWorkFactory, translationQueue domain.TranslationQueue, balanceService domain.BalanceService, translationQueryService TranslationQueryService) TranslationService {
 	return &translationService{
-		translationRepo:         translationRepo,
+		unitOfWorkFactory:       unitOfWorkFactory,
 		translationQueue:        translationQueue,
 		balanceService:          balanceService,
 		translationQueryService: translationQueryService,

@@ -1,42 +1,43 @@
-package infrastructure
+package postgres
 
 import (
+	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"text-to-speech-translation-service/pkg/domain"
 )
 
 type translationRepo struct {
-	db *sqlx.DB
+	tx *pg.Tx
 }
 
 func (t *translationRepo) Store(translation domain.Translation) error {
-	_, err := t.db.Query(
+	_, err := t.tx.Exec(
 		`INSERT INTO translation (id_translation, id_user, status, text_to_translate, translated_data)
-		VALUES ($1, $2, $3, $4, $5)
+		VALUES (?id, ?user_id, ?status, ?text_to_translate, ?translated_data)
 		ON CONFLICT (id_translation)
-			DO UPDATE SET id_user           = $2,
-						  status            = $3,
-						  text_to_translate = $4,
-						  translated_data   = $5;`,
-		uuid.UUID(translation.ID).String(), translation.UserID, translation.Status, translation.Text, translation.SpeechData)
+			DO UPDATE SET id_user           = ?user_id,
+						  status            = ?status,
+						  text_to_translate = ?text_to_translate,
+						  translated_data   = ?translated_data;`,
+		translationDTO{uuid.UUID(translation.ID).String(), translation.UserID.String(), translation.Status, translation.Text, translation.SpeechData},
+	)
 	return err
 }
 
 func (t *translationRepo) FindOne(translationID domain.TranslationID) (domain.Translation, error) {
 	var translations []sqlxTranslation
-	err := t.db.Select(&translations, "SELECT * FROM translation WHERE id_translation=$1 LIMIT 1", uuid.UUID(translationID).String())
+	_, err := t.tx.Query(&translations, "SELECT * FROM translation WHERE id_translation=? LIMIT 1", uuid.UUID(translationID).String())
 	if err != nil {
 		return domain.Translation{}, err
 	}
 	if len(translations) == 0 {
 		return domain.Translation{}, domain.ErrTranslationIsNotFound
 	}
-	translationUUID, err := uuid.Parse(translations[0].ID)
+	translationUUID, err := uuid.Parse(translations[0].IDTranslation)
 	if err != nil {
 		return domain.Translation{}, err
 	}
-	userUUID, err := uuid.Parse(translations[0].UserID)
+	userUUID, err := uuid.Parse(translations[0].IDUser)
 	if err != nil {
 		return domain.Translation{}, err
 	}
@@ -49,13 +50,21 @@ func (t *translationRepo) FindOne(translationID domain.TranslationID) (domain.Tr
 	}, nil
 }
 
-func NewTranslationRepo(db *sqlx.DB) domain.TranslationRepo {
-	return &translationRepo{db: db}
+func NewTranslationRepo(tx *pg.Tx) domain.TranslationRepo {
+	return &translationRepo{tx: tx}
+}
+
+type translationDTO struct {
+	ID              string
+	UserID          string
+	Status          int
+	TextToTranslate string
+	TranslatedData  string
 }
 
 type sqlxTranslation struct {
-	ID              string `db:"id_translation"`
-	UserID          string `db:"id_user"`
+	IDTranslation   string `db:"id_translation"`
+	IDUser          string `db:"id_user"`
 	Status          int    `db:"status"`
 	TextToTranslate string `db:"text_to_translate"`
 	TranslatedData  string `db:"translated_data"`

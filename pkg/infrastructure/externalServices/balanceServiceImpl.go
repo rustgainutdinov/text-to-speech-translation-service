@@ -1,4 +1,4 @@
-package infrastructure
+package externalServices
 
 import (
 	"encoding/json"
@@ -15,8 +15,8 @@ type balanceService struct {
 	balanceServiceAddress string
 }
 
-func (b *balanceService) CanWriteOf(userID uuid.UUID, amountOfSymbols int) (bool, error) {
-	resp, err := http.Get("http://" + b.balanceServiceAddress + canWriteOffUrl + "?userID=" + userID.String() + "&score=" + strconv.Itoa(amountOfSymbols))
+func (b *balanceService) CanWriteOf(userID uuid.UUID, score int) (bool, error) {
+	resp, err := http.Get("http://" + b.balanceServiceAddress + canWriteOffUrl + "?userID=" + userID.String() + "&score=" + strconv.Itoa(score))
 	if err != nil {
 		return false, err
 	}

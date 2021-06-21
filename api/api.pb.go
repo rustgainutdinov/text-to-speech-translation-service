@@ -483,7 +483,7 @@ func (c *translationServiceClient) GetTranslationData(ctx context.Context, in *T
 	return out, nil
 }
 
-// TranslationServiceServer is the server API for TranslationService service.
+// TranslationServiceServer is the transport API for TranslationService service.
 type TranslationServiceServer interface {
 	Translate(context.Context, *TranslationRequest) (*TranslationID, error)
 	GetTranslationStatus(context.Context, *TranslationID) (*TranslationStatus, error)

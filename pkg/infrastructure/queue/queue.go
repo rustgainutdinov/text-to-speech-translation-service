@@ -1,4 +1,4 @@
-package infrastructure
+package queue
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func (s *queue) Start() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				time.Sleep(10 * time.Second)
+				time.Sleep(1 * time.Second)
 			}
 		default:
 			time.Sleep(1 * time.Second)

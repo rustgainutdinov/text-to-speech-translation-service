@@ -1,4 +1,4 @@
-package infrastructure
+package transport
 
 import "github.com/kelseyhightower/envconfig"
 

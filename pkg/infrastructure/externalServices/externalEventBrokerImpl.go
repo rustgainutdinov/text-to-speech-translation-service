@@ -1,4 +1,4 @@
-package infrastructure
+package externalServices
 
 import (
 	"encoding/json"
@@ -13,8 +13,8 @@ type ExternalEventBrokerImpl struct {
 	queue   *amqp.Queue
 }
 
-func (e *ExternalEventBrokerImpl) TextTranslated(userID uuid.UUID, amountOfSymbols int) error {
-	translatedInfo := textTranslatedInfo{UserID: userID.String(), AmountOfSymbols: amountOfSymbols}
+func (e *ExternalEventBrokerImpl) TextTranslated(userID uuid.UUID, score int) error {
+	translatedInfo := textTranslatedInfo{UserID: userID.String(), Score: score}
 	body, err := json.Marshal(translatedInfo)
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (e *ExternalEventBrokerImpl) TextTranslated(userID uuid.UUID, amountOfSymbo
 	if err != nil {
 		return err
 	}
-	log.Printf("Text translated event: userID-%s amountOfSymbols-%d", userID.String(), amountOfSymbols)
+	log.Printf("Text translated event: userID-%s score-%d", userID.String(), score)
 	return nil
 }
 
@@ -36,6 +36,6 @@ func NewExternalEventBroker(channel *amqp.Channel, queue *amqp.Queue) domain.Ext
 }
 
 type textTranslatedInfo struct {
-	UserID          string `json:"userID"`
-	AmountOfSymbols int    `json:"amountOfSymbols"`
+	UserID string `json:"userID"`
+	Score  int    `json:"score"`
 }

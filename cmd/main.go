@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/go-pg/pg/v10"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
 	"text-to-speech-translation-service/api"
-	"text-to-speech-translation-service/pkg/infrastructure"
+	server2 "text-to-speech-translation-service/pkg/infrastructure/transport"
 )
 
 func main() {
@@ -21,7 +20,7 @@ func main() {
 }
 
 func run() error {
-	envConf, err := infrastructure.ParseEnv()
+	envConf, err := server2.ParseEnv()
 	if err != nil {
 		return err
 	}
@@ -33,28 +32,29 @@ func run() error {
 	return runHTTPProxy(envConf.GRPCAddress, envConf.HTTPProxyAddress)
 }
 
-func runGRPCService(envConf *infrastructure.Config) error {
-	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s port=%s host=%s sslmode=disable", envConf.DBUser, envConf.DBPass, envConf.DBName, envConf.DBPort, envConf.DBHost)
-	db, err := sqlx.Open("postgres", dbInfo)
-	if err != nil {
-		return err
-	}
+func runGRPCService(envConf *server2.Config) error {
+	db := pg.Connect(&pg.Options{
+		User:     envConf.DBUser,
+		Password: envConf.DBPass,
+		Addr:     envConf.DBHost + ":" + envConf.DBPort,
+		Database: envConf.DBName,
+	})
 	rabbitMqChannel, err := getRabbitMqChannel(envConf)
 	if err != nil {
 		return err
 	}
-	dependencyContainer := infrastructure.NewDependencyContainer(db, *envConf, rabbitMqChannel)
+	dependencyContainer := server2.NewDependencyContainer(db, *envConf, rabbitMqChannel)
 	lis, err := net.Listen("tcp", envConf.GRPCAddress)
 	if err != nil {
 		return err
 	}
 	server := grpc.NewServer()
-	api.RegisterTranslationServiceServer(server, &infrastructure.TranslationServer{DependencyContainer: dependencyContainer})
-	fmt.Println("starting grpc server at " + envConf.GRPCAddress)
+	api.RegisterTranslationServiceServer(server, &server2.TranslationServer{DependencyContainer: dependencyContainer})
+	fmt.Println("starting grpc transport at " + envConf.GRPCAddress)
 	return server.Serve(lis)
 }
 
-func getRabbitMqChannel(envConf *infrastructure.Config) (*amqp.Channel, error) {
+func getRabbitMqChannel(envConf *server2.Config) (*amqp.Channel, error) {
 	rabbitMqInfo := fmt.Sprintf("amqp://%s:%s@%s//", envConf.RabbitMqUser, envConf.RabbitMqPass, envConf.RabbitMqHost)
 	conn, err := amqp.Dial(rabbitMqInfo)
 	if err != nil {
@@ -76,6 +76,6 @@ func runHTTPProxy(serviceAddr string, httpProxyPort string) error {
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcGWMux)
-	fmt.Println("starting http server at " + httpProxyPort)
+	fmt.Println("starting http transport at " + httpProxyPort)
 	return http.ListenAndServe(httpProxyPort, mux)
 }

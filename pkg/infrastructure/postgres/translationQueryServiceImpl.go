@@ -1,18 +1,18 @@
-package infrastructure
+package postgres
 
 import (
+	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"text-to-speech-translation-service/pkg/app"
 )
 
 type translationQueryServiceImpl struct {
-	db *sqlx.DB
+	db pg.DBI
 }
 
 func (t *translationQueryServiceImpl) GetTranslationData(translationID uuid.UUID) (app.TranslationDTO, error) {
 	var translations []sqlxTranslationStatusAndData
-	err := t.db.Select(&translations, "SELECT status, translated_data FROM translation WHERE id_translation=$1 LIMIT 1", translationID.String())
+	_, err := t.db.Query(&translations, "SELECT status, translated_data FROM translation WHERE id_translation=? LIMIT 1", translationID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func (t *translationQueryServiceImpl) GetTranslationData(translationID uuid.UUID
 	}, nil
 }
 
-func NewTranslationQueryService(db *sqlx.DB) app.TranslationQueryService {
+func NewTranslationQueryService(db pg.DBI) app.TranslationQueryService {
 	return &translationQueryServiceImpl{db: db}
 }
 

@@ -1,4 +1,4 @@
-package infrastructure
+package externalServices
 
 import "text-to-speech-translation-service/pkg/domain"
 
