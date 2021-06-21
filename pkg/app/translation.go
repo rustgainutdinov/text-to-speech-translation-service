@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"text-to-speech-translation-service/pkg/domain"
 )
@@ -12,17 +13,34 @@ type TranslationService interface {
 }
 
 type translationService struct {
-	unitOfWorkFactory       domain.UnitOfWorkFactory
-	translationQueue        domain.TranslationQueue
-	balanceService          domain.BalanceService
+	unitOfWorkFactory       UnitOfWorkFactory
+	translationQueue        TranslationQueue
+	balanceService          BalanceService
 	translationQueryService TranslationQueryService
 }
 
+var ErrThereAreNotEnoughSymbolsToWriteOff = fmt.Errorf("there are not enough symbols to write off")
+
 func (b *translationService) Translate(userID uuid.UUID, text string) (uuid.UUID, error) {
-	translationID, err := domain.NewTranslationManager(b.translationQueue, b.unitOfWorkFactory, b.balanceService).AddTranslation(text, userID)
+	res, err := b.balanceService.CanWriteOf(userID, len(text))
 	if err != nil {
 		return uuid.UUID{}, err
 	}
+	if !res {
+		return uuid.UUID{}, ErrThereAreNotEnoughSymbolsToWriteOff
+	}
+	var translationID domain.TranslationID
+	err = b.unitOfWorkFactory.NewUnitOfWork(func(provider RepositoryProvider) error {
+		translationID, err = domain.NewTranslationManager(provider.TranslationRepo()).AddTranslation(text, userID)
+		if err != nil {
+			return err
+		}
+		b.translationQueue.AddTask(Task{
+			TranslationID: uuid.UUID(translationID),
+			Text:          text,
+		})
+		return nil
+	})
 	return uuid.UUID(translationID), nil
 }
 
@@ -42,7 +60,7 @@ func (b *translationService) GetTranslationStatus(translationID uuid.UUID) (int,
 	return translationDTO.Status(), nil
 }
 
-func NewTranslationService(unitOfWorkFactory domain.UnitOfWorkFactory, translationQueue domain.TranslationQueue, balanceService domain.BalanceService, translationQueryService TranslationQueryService) TranslationService {
+func NewTranslationService(unitOfWorkFactory UnitOfWorkFactory, translationQueue TranslationQueue, balanceService BalanceService, translationQueryService TranslationQueryService) TranslationService {
 	return &translationService{
 		unitOfWorkFactory:       unitOfWorkFactory,
 		translationQueue:        translationQueue,

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"github.com/go-pg/pg/v10"
+	"text-to-speech-translation-service/pkg/app"
 	"text-to-speech-translation-service/pkg/domain"
 )
 
@@ -29,7 +30,7 @@ type UnitOfWorkFactory struct {
 	Client pg.DBI
 }
 
-func (u *UnitOfWorkFactory) NewUnitOfWork(f func(provider domain.RepositoryProvider) error) error {
+func (u *UnitOfWorkFactory) NewUnitOfWork(f func(provider app.RepositoryProvider) error) error {
 	return u.Client.RunInTransaction(context.Background(), func(tx *pg.Tx) error {
 		unitOfWork := &unitOfWork{tx: tx}
 		return f(unitOfWork)

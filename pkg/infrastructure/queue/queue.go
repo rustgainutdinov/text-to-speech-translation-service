@@ -3,17 +3,18 @@ package queue
 import (
 	"context"
 	"fmt"
-	"text-to-speech-translation-service/pkg/domain"
+	"github.com/google/uuid"
+	"text-to-speech-translation-service/pkg/app"
 	"time"
 )
 
 type queue struct {
-	in                  chan domain.Task
+	in                  chan app.Task
 	ctx                 context.Context
-	textToSpeechService domain.TextToSpeechService
+	textToSpeechService app.TextToSpeechService
 }
 
-func (s *queue) AddTask(task domain.Task) {
+func (s *queue) AddTask(task app.Task) {
 	s.in <- task
 }
 
@@ -23,7 +24,7 @@ func (s *queue) Start() {
 		select {
 		case task := <-s.in:
 			{
-				err := s.textToSpeechService.Translate(task.TranslationID)
+				err := s.textToSpeechService.Translate(uuid.UUID(task.TranslationID))
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -35,9 +36,9 @@ func (s *queue) Start() {
 	}
 }
 
-func NewQueue(textToSpeechService domain.TextToSpeechService) domain.TranslationQueue {
+func NewQueue(textToSpeechService app.TextToSpeechService) app.TranslationQueue {
 	q := queue{
-		in:                  make(chan domain.Task),
+		in:                  make(chan app.Task),
 		ctx:                 context.Background(),
 		textToSpeechService: textToSpeechService,
 	}

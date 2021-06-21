@@ -1,7 +1,9 @@
-package domain
+package app
+
+import "text-to-speech-translation-service/pkg/domain"
 
 type RepositoryProvider interface {
-	TranslationRepo() TranslationRepo
+	TranslationRepo() domain.TranslationRepo
 }
 
 type UnitOfWork interface {

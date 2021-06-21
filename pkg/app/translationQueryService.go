@@ -14,4 +14,6 @@ type TranslationQueryService interface {
 type TranslationDTO interface {
 	Status() int
 	TranslatedData() string
+	UserID() string
+	Text() string
 }

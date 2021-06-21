@@ -2,10 +2,9 @@ package externalServices
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/streadway/amqp"
 	"log"
-	"text-to-speech-translation-service/pkg/domain"
+	"text-to-speech-translation-service/pkg/app"
 )
 
 type ExternalEventBrokerImpl struct {
@@ -13,8 +12,8 @@ type ExternalEventBrokerImpl struct {
 	queue   *amqp.Queue
 }
 
-func (e *ExternalEventBrokerImpl) TextTranslated(userID uuid.UUID, score int) error {
-	translatedInfo := textTranslatedInfo{UserID: userID.String(), Score: score}
+func (e *ExternalEventBrokerImpl) TextTranslated(userID string, score int) error {
+	translatedInfo := textTranslatedInfo{UserID: userID, Score: score}
 	body, err := json.Marshal(translatedInfo)
 	if err != nil {
 		return err
@@ -27,11 +26,11 @@ func (e *ExternalEventBrokerImpl) TextTranslated(userID uuid.UUID, score int) er
 	if err != nil {
 		return err
 	}
-	log.Printf("Text translated event: userID-%s score-%d", userID.String(), score)
+	log.Printf("Text translated event: userID-%s score-%d", userID, score)
 	return nil
 }
 
-func NewExternalEventBroker(channel *amqp.Channel, queue *amqp.Queue) domain.ExternalEventBroker {
+func NewExternalEventBroker(channel *amqp.Channel, queue *amqp.Queue) app.ExternalEventBroker {
 	return &ExternalEventBrokerImpl{channel: channel, queue: queue}
 }
 

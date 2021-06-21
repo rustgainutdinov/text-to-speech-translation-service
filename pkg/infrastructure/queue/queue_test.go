@@ -4,29 +4,30 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"testing"
+	"text-to-speech-translation-service/pkg/app"
 	"text-to-speech-translation-service/pkg/domain"
 	"time"
 )
 
 func TestQueue_AddTask(t *testing.T) {
-	textToSpeechService := domain.NewTextToSpeechService(&mockTranslationTextToSpeechRepo{}, &mockExternalTextToSpeech{}, &mockExternalEventBroker{})
+	textToSpeechService := app.NewTextToSpeechService(&mockTranslationTextToSpeechRepo{}, &mockExternalTextToSpeech{}, &mockExternalEventBroker{})
 	queue := NewQueue(textToSpeechService)
 	go func() {
 		time.Sleep(time.Second * 2)
-		queue.AddTask(domain.Task{
+		queue.AddTask(app.Task{
 			TranslationID: domain.TranslationID{},
 			Text:          "msg 1",
 		})
 	}()
-	queue.AddTask(domain.Task{
+	queue.AddTask(app.Task{
 		TranslationID: domain.TranslationID{},
 		Text:          "msg 2",
 	})
-	queue.AddTask(domain.Task{
+	queue.AddTask(app.Task{
 		TranslationID: domain.TranslationID{},
 		Text:          "msg 3",
 	})
-	queue.AddTask(domain.Task{
+	queue.AddTask(app.Task{
 		TranslationID: domain.TranslationID{},
 		Text:          "msg 4",
 	})

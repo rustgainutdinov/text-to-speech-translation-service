@@ -13,6 +13,6 @@ generate-grpc:
 			-I${GOPATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.16.0/third_party/googleapis \
             -I${GOPATH}/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.16.0 \
 			--grpc-gateway_out=logtostderr=true:./api \
-			--swagger_out=allow_merge=true,merge_file_name=api:. \
+			--swagger_out=allow_merge=true,merge_file_name=api:./api \
 			--go_out=plugins=grpc:./api \
 			./api/api.proto

@@ -1,59 +1,49 @@
 package domain
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 )
 
 type TranslationManager interface {
 	AddTranslation(text string, userID uuid.UUID) (TranslationID, error)
+	SaveTranslatedData(translationID TranslationID, translatedData string) error
 }
 
-var ErrThereAreNotEnoughSymbolsToWriteOff = fmt.Errorf("there are not enough symbols to write off")
-
 type translationManager struct {
-	translationQueue  TranslationQueue
-	unitOfWorkFactory UnitOfWorkFactory
-	balanceService    BalanceService
+	translationRepo TranslationRepo
 }
 
 func (t *translationManager) AddTranslation(text string, userID uuid.UUID) (TranslationID, error) {
-	var translationID TranslationID
-	err := t.unitOfWorkFactory.NewUnitOfWork(func(provider RepositoryProvider) error {
-		res, err := t.balanceService.CanWriteOf(userID, len(text))
-		if err != nil {
-			return err
-		}
-		if !res {
-			return ErrThereAreNotEnoughSymbolsToWriteOff
-		}
-		translationID = TranslationID(uuid.New())
-		translation := Translation{
-			ID:     translationID,
-			UserID: userID,
-			Text:   text,
-			Status: TranslationStatusWaiting,
-		}
-		err = provider.TranslationRepo().Store(translation)
-		if err != nil {
-			return err
-		}
-		t.translationQueue.AddTask(Task{
-			TranslationID: translationID,
-			Text:          text,
-		})
-		return nil
-	})
+	translationID := TranslationID(uuid.New())
+	translation := Translation{
+		ID:     translationID,
+		UserID: userID,
+		Text:   text,
+		Status: TranslationStatusWaiting,
+	}
+	err := t.translationRepo.Store(translation)
 	if err != nil {
 		return TranslationID{}, err
 	}
 	return translationID, nil
 }
 
-func NewTranslationManager(translationQueue TranslationQueue, unitOfWorkFactory UnitOfWorkFactory, balanceService BalanceService) TranslationManager {
+func (t *translationManager) SaveTranslatedData(translationID TranslationID, translatedData string) error {
+	translation, err := t.translationRepo.FindOne(translationID)
+	if err != nil {
+		return err
+	}
+	return t.translationRepo.Store(Translation{
+		ID:         translationID,
+		UserID:     translation.UserID,
+		Text:       translation.Text,
+		Status:     TranslationStatusSuccess,
+		SpeechData: translation.SpeechData,
+	})
+}
+
+func NewTranslationManager(translationRepo TranslationRepo) TranslationManager {
 	return &translationManager{
-		translationQueue:  translationQueue,
-		unitOfWorkFactory: unitOfWorkFactory,
-		balanceService:    balanceService,
+		translationRepo: translationRepo,
 	}
 }

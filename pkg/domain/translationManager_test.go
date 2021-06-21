@@ -6,11 +6,9 @@ import (
 	"testing"
 )
 
-const mockTranslationSpeechToText = "ya perevel"
-
 func TestTranslationService_AddTextToSpeechTranslation(t *testing.T) {
 	repo := mockTranslationTextToSpeechRepo{}
-	translationService := NewTranslationManager(&mockTranslationQueue{}, &repo, &mockBalanceService{})
+	translationService := NewTranslationManager(&repo)
 	textToTranslate := "Hello, world"
 	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
 	assert.Nil(t, err)
@@ -18,22 +16,6 @@ func TestTranslationService_AddTextToSpeechTranslation(t *testing.T) {
 	translation, err := repo.FindOne(translationID)
 	assert.Nil(t, err)
 	assert.Equal(t, textToTranslate, translation.Text)
-}
-
-func TestTranslationService_TranslateTextToSpeech(t *testing.T) {
-	repo := mockTranslationTextToSpeechRepo{}
-	translationService := NewTranslationManager(&mockTranslationQueue{}, &repo, &mockBalanceService{})
-	textToTranslate := "Hello, world"
-	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
-	assert.Nil(t, err)
-	textToSpeechService := NewTextToSpeechService(&repo, &mockExternalTextToSpeech{}, &mockExternalEventBroker{})
-	err = textToSpeechService.Translate(translationID)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(repo.translations))
-	translation, err := repo.FindOne(translationID)
-	assert.Nil(t, err)
-	assert.Equal(t, textToTranslate, translation.Text)
-	assert.Equal(t, mockTranslationSpeechToText, translation.SpeechData)
 }
 
 type mockTranslationTextToSpeechRepo struct {
@@ -58,28 +40,4 @@ func (m *mockTranslationTextToSpeechRepo) FindOne(translationID TranslationID) (
 		}
 	}
 	return Translation{}, ErrTranslationIsNotFound
-}
-
-type mockExternalTextToSpeech struct{}
-
-func (t *mockExternalTextToSpeech) Translate(text string) (string, error) {
-	return mockTranslationSpeechToText, nil
-}
-
-type mockTranslationQueue struct{}
-
-func (t *mockTranslationQueue) AddTask(task Task) {}
-
-func (t *mockTranslationQueue) Start() {}
-
-type mockBalanceService struct{}
-
-func (t *mockBalanceService) CanWriteOf(userID uuid.UUID, score int) (bool, error) {
-	return true, nil
-}
-
-type mockExternalEventBroker struct{}
-
-func (t *mockExternalEventBroker) TextTranslated(userID uuid.UUID, score int) error {
-	return nil
 }

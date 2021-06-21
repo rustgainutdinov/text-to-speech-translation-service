@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"text-to-speech-translation-service/pkg/domain"
+	"text-to-speech-translation-service/pkg/app"
 )
 
 const canWriteOffUrl = "/api/v1/balance/canWriteOff"
@@ -33,7 +33,7 @@ func (b *balanceService) CanWriteOf(userID uuid.UUID, score int) (bool, error) {
 	return response.Result, nil
 }
 
-func NewBalanceService(balanceServiceAddress string) domain.BalanceService {
+func NewBalanceService(balanceServiceAddress string) app.BalanceService {
 	return &balanceService{balanceServiceAddress: balanceServiceAddress}
 }
 
