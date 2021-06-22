@@ -22,8 +22,8 @@ func (s *queue) AddTask(task app.Task) {
 	log.Info("task added successfully")
 }
 
-var ErrQueueTaskDataParsing = fmt.Errorf("can't parse queue task data")
-var ErrUnknownTaskType = fmt.Errorf("unknown task type")
+var errQueueTaskDataParsing = fmt.Errorf("can't parse queue task data")
+var errUnknownTaskType = fmt.Errorf("unknown task type")
 
 func (s *queue) Start() {
 	for {
@@ -35,7 +35,7 @@ func (s *queue) Start() {
 				case app.TextTranslatedTaskType:
 					err = s.textTranslatedTaskHandler(task)
 				default:
-					err = ErrUnknownTaskType
+					err = errUnknownTaskType
 				}
 				if err != nil {
 					log.WithFields(log.Fields{"task": task}).Error(err)
@@ -52,7 +52,7 @@ func (s *queue) Start() {
 func (s *queue) textTranslatedTaskHandler(task app.Task) error {
 	value, ok := task.Data.(app.TextTranslated)
 	if !ok {
-		return ErrQueueTaskDataParsing
+		return errQueueTaskDataParsing
 	}
 	return s.textToSpeechService.Translate(value.TranslationID)
 }

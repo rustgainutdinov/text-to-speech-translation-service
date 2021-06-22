@@ -54,10 +54,17 @@ func runGRPCService(envConf *infrastructure.Config) error {
 	if err != nil {
 		return err
 	}
-	server := grpc.NewServer()
+	server := grpc.NewServer(grpc.UnaryInterceptor(makeGRPCUnaryInterceptor()))
 	api.RegisterTranslationServiceServer(server, &server2.TranslationServer{DependencyContainer: dependencyContainer})
 	log.WithFields(log.Fields{"grpc address": envConf.GRPCAddress}).Info("successfully starting grpc transport")
 	return server.Serve(lis)
+}
+
+func makeGRPCUnaryInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		resp, err = handler(ctx, req)
+		return resp, server2.TranslateError(err)
+	}
 }
 
 func getRabbitMqChannel(envConf *infrastructure.Config) (*amqp.Channel, error) {

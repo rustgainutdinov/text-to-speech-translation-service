@@ -6,17 +6,19 @@ import (
 	"text-to-speech-translation-service/pkg/app/dataProvider"
 )
 
-type translationQueryServiceImpl struct {
+type translationQueryService struct {
 	db pg.DBI
 }
 
-func (t *translationQueryServiceImpl) GetTranslationData(translationID uuid.UUID) (dataProvider.TranslationDTO, error) {
+func (t *translationQueryService) GetTranslationData(translationID uuid.UUID) (dataProvider.TranslationDTO, error) {
 	var translationData sqlxTranslationStatusAndData
 	_, err := t.db.QueryOne(&translationData, "SELECT status, translated_data, id_user, text_to_translate FROM translation WHERE id_translation=?", translationID.String())
 	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, dataProvider.ErrTranslationIsNotFound
+		}
 		return nil, err
 	}
-	//TODO: добавить обработку ошибки not found (ErrTranslationIsNotFound)
 	return &translation{
 		status:          translationData.Status,
 		translatedData:  translationData.TranslatedData,
@@ -26,7 +28,7 @@ func (t *translationQueryServiceImpl) GetTranslationData(translationID uuid.UUID
 }
 
 func NewTranslationQueryService(db pg.DBI) dataProvider.TranslationQueryService {
-	return &translationQueryServiceImpl{db: db}
+	return &translationQueryService{db: db}
 }
 
 type translation struct {

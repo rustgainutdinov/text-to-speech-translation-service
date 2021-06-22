@@ -28,9 +28,11 @@ func (t *translationRepo) FindOne(translationID domain.TranslationID) (domain.Tr
 	var translation sqlxTranslation
 	_, err := t.tx.QueryOne(&translation, "SELECT * FROM translation WHERE id_translation=?", uuid.UUID(translationID).String())
 	if err != nil {
+		if err == pg.ErrNoRows {
+			return domain.Translation{}, domain.ErrTranslationIsNotFound
+		}
 		return domain.Translation{}, err
 	}
-	//TODO: добавить обработку ошибки not found (ErrTranslationIsNotFound)
 	translationUUID, err := uuid.Parse(translation.IDTranslation)
 	if err != nil {
 		return domain.Translation{}, err

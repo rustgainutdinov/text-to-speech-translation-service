@@ -25,11 +25,11 @@ type translationService struct {
 var ErrThereAreNotEnoughSymbolsToWriteOff = fmt.Errorf("there are not enough symbols to write off")
 
 func (b *translationService) AddTextToTranslate(userID uuid.UUID, text string) (uuid.UUID, error) {
-	res, err := b.balanceService.CanWriteOf(userID, len(text))
+	canWriteOf, err := b.balanceService.CanWriteOf(userID, len(text))
 	if err != nil {
 		return uuid.UUID{}, err
 	}
-	if !res {
+	if !canWriteOf {
 		return uuid.UUID{}, ErrThereAreNotEnoughSymbolsToWriteOff
 	}
 	var translationID domain.TranslationID
