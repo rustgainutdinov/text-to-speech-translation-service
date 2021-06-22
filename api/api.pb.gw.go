@@ -33,7 +33,7 @@ var _ = utilities.NewDoubleArray
 var _ = descriptor.ForMessage
 var _ = metadata.Join
 
-func request_TranslationService_Translate_0(ctx context.Context, marshaler runtime.Marshaler, client TranslationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_TranslationService_AddTextToTranslate_0(ctx context.Context, marshaler runtime.Marshaler, client TranslationServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TranslationRequest
 	var metadata runtime.ServerMetadata
 
@@ -45,12 +45,12 @@ func request_TranslationService_Translate_0(ctx context.Context, marshaler runti
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.Translate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.AddTextToTranslate(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_TranslationService_Translate_0(ctx context.Context, marshaler runtime.Marshaler, server TranslationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_TranslationService_AddTextToTranslate_0(ctx context.Context, marshaler runtime.Marshaler, server TranslationServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq TranslationRequest
 	var metadata runtime.ServerMetadata
 
@@ -62,7 +62,7 @@ func local_request_TranslationService_Translate_0(ctx context.Context, marshaler
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.Translate(ctx, &protoReq)
+	msg, err := server.AddTextToTranslate(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -145,7 +145,7 @@ func local_request_TranslationService_GetTranslationData_0(ctx context.Context, 
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterTranslationServiceHandlerFromEndpoint instead.
 func RegisterTranslationServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server TranslationServiceServer) error {
 
-	mux.Handle("POST", pattern_TranslationService_Translate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_TranslationService_AddTextToTranslate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -156,7 +156,7 @@ func RegisterTranslationServiceHandlerServer(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_TranslationService_Translate_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_TranslationService_AddTextToTranslate_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -164,7 +164,7 @@ func RegisterTranslationServiceHandlerServer(ctx context.Context, mux *runtime.S
 			return
 		}
 
-		forward_TranslationService_Translate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_TranslationService_AddTextToTranslate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -255,7 +255,7 @@ func RegisterTranslationServiceHandler(ctx context.Context, mux *runtime.ServeMu
 // "TranslationServiceClient" to call the correct interceptors.
 func RegisterTranslationServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client TranslationServiceClient) error {
 
-	mux.Handle("POST", pattern_TranslationService_Translate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_TranslationService_AddTextToTranslate_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -264,14 +264,14 @@ func RegisterTranslationServiceHandlerClient(ctx context.Context, mux *runtime.S
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_TranslationService_Translate_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_TranslationService_AddTextToTranslate_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_TranslationService_Translate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_TranslationService_AddTextToTranslate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -319,7 +319,7 @@ func RegisterTranslationServiceHandlerClient(ctx context.Context, mux *runtime.S
 }
 
 var (
-	pattern_TranslationService_Translate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "translation", "add"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TranslationService_AddTextToTranslate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "translation", "add"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_TranslationService_GetTranslationStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "translation", "status"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -327,7 +327,7 @@ var (
 )
 
 var (
-	forward_TranslationService_Translate_0 = runtime.ForwardResponseMessage
+	forward_TranslationService_AddTextToTranslate_0 = runtime.ForwardResponseMessage
 
 	forward_TranslationService_GetTranslationStatus_0 = runtime.ForwardResponseMessage
 

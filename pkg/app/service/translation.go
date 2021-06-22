@@ -10,7 +10,7 @@ import (
 )
 
 type TranslationService interface {
-	Translate(userID uuid.UUID, text string) (uuid.UUID, error)
+	AddTextToTranslate(userID uuid.UUID, text string) (uuid.UUID, error)
 	GetTranslationData(translationID uuid.UUID) (string, error)
 	GetTranslationStatus(translationID uuid.UUID) (int, error)
 }
@@ -24,7 +24,7 @@ type translationService struct {
 
 var ErrThereAreNotEnoughSymbolsToWriteOff = fmt.Errorf("there are not enough symbols to write off")
 
-func (b *translationService) Translate(userID uuid.UUID, text string) (uuid.UUID, error) {
+func (b *translationService) AddTextToTranslate(userID uuid.UUID, text string) (uuid.UUID, error) {
 	res, err := b.balanceService.CanWriteOf(userID, len(text))
 	if err != nil {
 		return uuid.UUID{}, err
@@ -40,7 +40,6 @@ func (b *translationService) Translate(userID uuid.UUID, text string) (uuid.UUID
 		}
 		return nil
 	})
-	//TODO: внести добавление в очередь в транзакцию, либо проставлять ошибочный статус при ошиьке добавления в очередь
 	b.translationQueue.AddTask(app.Task{
 		Type: app.TextTranslatedTaskType,
 		Data: app.TextTranslated{

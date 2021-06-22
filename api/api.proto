@@ -29,7 +29,7 @@ message TranslationData {
 }
 
 service TranslationService {
-  rpc Translate (TranslationRequest) returns (TranslationID) {
+  rpc AddTextToTranslate (TranslationRequest) returns (TranslationID) {
     option (google.api.http) = {
       post: "/api/v1/translation/add",
       body: "*"

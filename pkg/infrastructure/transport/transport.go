@@ -12,12 +12,12 @@ type TranslationServer struct {
 	DependencyContainer infrastructure.DependencyContainer
 }
 
-func (t *TranslationServer) Translate(_ context.Context, req *api.TranslationRequest) (*api.TranslationID, error) {
+func (t *TranslationServer) AddTextToTranslate(_ context.Context, req *api.TranslationRequest) (*api.TranslationID, error) {
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return nil, err
 	}
-	translationID, err := t.DependencyContainer.NewTranslationService().Translate(userID, req.Text)
+	translationID, err := t.DependencyContainer.NewTranslationService().AddTextToTranslate(userID, req.Text)
 	if err != nil {
 		return nil, err
 	}

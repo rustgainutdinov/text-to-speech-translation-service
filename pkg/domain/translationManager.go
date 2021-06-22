@@ -7,6 +7,7 @@ import (
 type TranslationManager interface {
 	AddTextToTranslate(text string, userID uuid.UUID) (TranslationID, error)
 	SaveTranslation(translationID TranslationID, translatedData string) error
+	MarkTranslationAsErrored(translationID TranslationID) error
 }
 
 type translationManager struct {
@@ -33,13 +34,18 @@ func (t *translationManager) SaveTranslation(translationID TranslationID, transl
 	if err != nil {
 		return err
 	}
-	return t.translationRepo.Store(Translation{
-		ID:         translationID,
-		UserID:     translation.UserID,
-		Text:       translation.Text,
-		Status:     TranslationStatusSuccess,
-		SpeechData: translatedData,
-	})
+	translation.Status = TranslationStatusSuccess
+	translation.SpeechData = translatedData
+	return t.translationRepo.Store(translation)
+}
+
+func (t *translationManager) MarkTranslationAsErrored(translationID TranslationID) error {
+	translation, err := t.translationRepo.FindOne(translationID)
+	if err != nil {
+		return err
+	}
+	translation.Status = TranslationStatusError
+	return t.translationRepo.Store(translation)
 }
 
 func NewTranslationManager(translationRepo TranslationRepo) TranslationManager {
