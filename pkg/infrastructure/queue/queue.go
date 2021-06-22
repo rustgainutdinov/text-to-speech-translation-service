@@ -3,31 +3,44 @@ package queue
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"text-to-speech-translation-service/pkg/app"
+	"text-to-speech-translation-service/pkg/app/service"
 	"time"
 )
 
 type queue struct {
 	in                  chan app.Task
 	ctx                 context.Context
-	textToSpeechService app.TextToSpeechService
+	textToSpeechService service.TextToSpeechService
 }
 
 func (s *queue) AddTask(task app.Task) {
-	s.in <- task
+	go func() {
+		s.in <- task
+	}()
+	log.Info("task added successfully")
 }
 
+var ErrQueueTaskDataParsing = fmt.Errorf("can't parse queue task data")
+var ErrUnknownTaskType = fmt.Errorf("unknown task type")
+
 func (s *queue) Start() {
-	fmt.Println("channel started")
 	for {
 		select {
 		case task := <-s.in:
 			{
-				err := s.textToSpeechService.Translate(uuid.UUID(task.TranslationID))
-				if err != nil {
-					fmt.Println(err)
+				var err error
+				switch task.Type {
+				case app.TextTranslatedTaskType:
+					err = s.textTranslatedTaskHandler(task)
+				default:
+					err = ErrUnknownTaskType
 				}
+				if err != nil {
+					log.WithFields(log.Fields{"task": task}).Error(err)
+				}
+				log.Info("task handled successfully")
 				time.Sleep(1 * time.Second)
 			}
 		default:
@@ -36,7 +49,15 @@ func (s *queue) Start() {
 	}
 }
 
-func NewQueue(textToSpeechService app.TextToSpeechService) app.TranslationQueue {
+func (s *queue) textTranslatedTaskHandler(task app.Task) error {
+	value, ok := task.Data.(app.TextTranslated)
+	if !ok {
+		return ErrQueueTaskDataParsing
+	}
+	return s.textToSpeechService.Translate(value.TranslationID)
+}
+
+func NewQueue(textToSpeechService service.TextToSpeechService) app.Queue {
 	q := queue{
 		in:                  make(chan app.Task),
 		ctx:                 context.Background(),

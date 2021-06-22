@@ -1,8 +1,11 @@
-package app
+package service
 
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"text-to-speech-translation-service/pkg/app"
+	"text-to-speech-translation-service/pkg/app/dataProvider"
+	balanceService2 "text-to-speech-translation-service/pkg/app/externalService/balanceService"
 	"text-to-speech-translation-service/pkg/domain"
 )
 
@@ -13,10 +16,10 @@ type TranslationService interface {
 }
 
 type translationService struct {
-	unitOfWorkFactory       UnitOfWorkFactory
-	translationQueue        TranslationQueue
-	balanceService          BalanceService
-	translationQueryService TranslationQueryService
+	unitOfWorkFactory       dataProvider.UnitOfWorkFactory
+	translationQueue        app.Queue
+	balanceService          balanceService2.BalanceService
+	translationQueryService dataProvider.TranslationQueryService
 }
 
 var ErrThereAreNotEnoughSymbolsToWriteOff = fmt.Errorf("there are not enough symbols to write off")
@@ -30,17 +33,20 @@ func (b *translationService) Translate(userID uuid.UUID, text string) (uuid.UUID
 		return uuid.UUID{}, ErrThereAreNotEnoughSymbolsToWriteOff
 	}
 	var translationID domain.TranslationID
-	err = b.unitOfWorkFactory.NewUnitOfWork(func(provider RepositoryProvider) error {
-		translationID, err = domain.NewTranslationManager(provider.TranslationRepo()).AddTranslation(text, userID)
+	err = b.unitOfWorkFactory.NewUnitOfWork(func(provider dataProvider.RepositoryProvider) error {
+		translationID, err = domain.NewTranslationManager(provider.TranslationRepo()).AddTextToTranslate(text, userID)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
 	//TODO: внести добавление в очередь в транзакцию, либо проставлять ошибочный статус при ошиьке добавления в очередь
-	b.translationQueue.AddTask(Task{
-		TranslationID: uuid.UUID(translationID),
-		Text:          text,
+	b.translationQueue.AddTask(app.Task{
+		Type: app.TextTranslatedTaskType,
+		Data: app.TextTranslated{
+			TranslationID: uuid.UUID(translationID),
+			Text:          text,
+		},
 	})
 	return uuid.UUID(translationID), nil
 }
@@ -61,7 +67,7 @@ func (b *translationService) GetTranslationStatus(translationID uuid.UUID) (int,
 	return translationDTO.Status(), nil
 }
 
-func NewTranslationService(unitOfWorkFactory UnitOfWorkFactory, translationQueue TranslationQueue, balanceService BalanceService, translationQueryService TranslationQueryService) TranslationService {
+func NewTranslationService(unitOfWorkFactory dataProvider.UnitOfWorkFactory, translationQueue app.Queue, balanceService balanceService2.BalanceService, translationQueryService dataProvider.TranslationQueryService) TranslationService {
 	return &translationService{
 		unitOfWorkFactory:       unitOfWorkFactory,
 		translationQueue:        translationQueue,

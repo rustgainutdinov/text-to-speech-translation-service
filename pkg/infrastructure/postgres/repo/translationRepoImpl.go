@@ -1,4 +1,4 @@
-package postgres
+package repo
 
 import (
 	"github.com/go-pg/pg/v10"
@@ -25,28 +25,26 @@ func (t *translationRepo) Store(translation domain.Translation) error {
 }
 
 func (t *translationRepo) FindOne(translationID domain.TranslationID) (domain.Translation, error) {
-	var translations []sqlxTranslation
-	_, err := t.tx.Query(&translations, "SELECT * FROM translation WHERE id_translation=? LIMIT 1", uuid.UUID(translationID).String())
+	var translation sqlxTranslation
+	_, err := t.tx.QueryOne(&translation, "SELECT * FROM translation WHERE id_translation=?", uuid.UUID(translationID).String())
 	if err != nil {
 		return domain.Translation{}, err
 	}
-	if len(translations) == 0 {
-		return domain.Translation{}, domain.ErrTranslationIsNotFound
-	}
-	translationUUID, err := uuid.Parse(translations[0].IDTranslation)
+	//TODO: добавить обработку ошибки not found (ErrTranslationIsNotFound)
+	translationUUID, err := uuid.Parse(translation.IDTranslation)
 	if err != nil {
 		return domain.Translation{}, err
 	}
-	userUUID, err := uuid.Parse(translations[0].IDUser)
+	userUUID, err := uuid.Parse(translation.IDUser)
 	if err != nil {
 		return domain.Translation{}, err
 	}
 	return domain.Translation{
 		ID:         domain.TranslationID(translationUUID),
 		UserID:     userUUID,
-		Text:       translations[0].TextToTranslate,
-		Status:     translations[0].Status,
-		SpeechData: translations[0].TranslatedData,
+		Text:       translation.TextToTranslate,
+		Status:     translation.Status,
+		SpeechData: translation.TranslatedData,
 	}, nil
 }
 

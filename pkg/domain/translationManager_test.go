@@ -10,7 +10,7 @@ func TestTranslationService_AddTextToSpeechTranslation(t *testing.T) {
 	repo := mockTranslationTextToSpeechRepo{}
 	translationService := NewTranslationManager(&repo)
 	textToTranslate := "Hello, world"
-	translationID, err := translationService.AddTranslation(textToTranslate, uuid.New())
+	translationID, err := translationService.AddTextToTranslate(textToTranslate, uuid.New())
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(repo.translations))
 	translation, err := repo.FindOne(translationID)

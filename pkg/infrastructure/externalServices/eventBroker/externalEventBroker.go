@@ -1,18 +1,18 @@
-package externalServices
+package eventBroker
 
 import (
 	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-	"log"
-	"text-to-speech-translation-service/pkg/app"
+	externalEventBroker2 "text-to-speech-translation-service/pkg/app/externalService/eventBroker"
 )
 
-type ExternalEventBrokerImpl struct {
+type externalEventBroker struct {
 	channel *amqp.Channel
 	queue   *amqp.Queue
 }
 
-func (e *ExternalEventBrokerImpl) TextTranslated(userID string, score int) error {
+func (e *externalEventBroker) TextTranslated(userID string, score int) error {
 	translatedInfo := textTranslatedInfo{UserID: userID, Score: score}
 	body, err := json.Marshal(translatedInfo)
 	if err != nil {
@@ -26,12 +26,12 @@ func (e *ExternalEventBrokerImpl) TextTranslated(userID string, score int) error
 	if err != nil {
 		return err
 	}
-	log.Printf("Text translated event: userID-%s score-%d", userID, score)
+	log.WithFields(log.Fields{"userID": userID, "score": score}).Info("Text translated")
 	return nil
 }
 
-func NewExternalEventBroker(channel *amqp.Channel, queue *amqp.Queue) app.ExternalEventBroker {
-	return &ExternalEventBrokerImpl{channel: channel, queue: queue}
+func NewExternalEventBroker(channel *amqp.Channel, queue *amqp.Queue) externalEventBroker2.ExternalEventBroker {
+	return &externalEventBroker{channel: channel, queue: queue}
 }
 
 type textTranslatedInfo struct {

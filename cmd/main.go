@@ -5,34 +5,37 @@ import (
 	"fmt"
 	"github.com/go-pg/pg/v10"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
 	"text-to-speech-translation-service/api"
+	"text-to-speech-translation-service/pkg/infrastructure"
 	server2 "text-to-speech-translation-service/pkg/infrastructure/transport"
 )
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Println(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
 func run() error {
-	envConf, err := server2.ParseEnv()
+	envConf, err := infrastructure.ParseEnv()
+	log.SetFormatter(&log.JSONFormatter{})
 	if err != nil {
 		return err
 	}
 	go func() {
 		if err := runGRPCService(envConf); err != nil {
-			fmt.Println(err.Error())
+			log.Fatal(err.Error())
 		}
 	}()
 	return runHTTPProxy(envConf.GRPCAddress, envConf.HTTPProxyAddress)
 }
 
-func runGRPCService(envConf *server2.Config) error {
+func runGRPCService(envConf *infrastructure.Config) error {
 	db := pg.Connect(&pg.Options{
 		User:     envConf.DBUser,
 		Password: envConf.DBPass,
@@ -43,18 +46,21 @@ func runGRPCService(envConf *server2.Config) error {
 	if err != nil {
 		return err
 	}
-	dependencyContainer := server2.NewDependencyContainer(db, *envConf, rabbitMqChannel)
+	dependencyContainer, err := infrastructure.NewDependencyContainer(db, *envConf, rabbitMqChannel)
+	if err != nil {
+		return err
+	}
 	lis, err := net.Listen("tcp", envConf.GRPCAddress)
 	if err != nil {
 		return err
 	}
 	server := grpc.NewServer()
 	api.RegisterTranslationServiceServer(server, &server2.TranslationServer{DependencyContainer: dependencyContainer})
-	fmt.Println("starting grpc transport at " + envConf.GRPCAddress)
+	log.WithFields(log.Fields{"grpc address": envConf.GRPCAddress}).Info("successfully starting grpc transport")
 	return server.Serve(lis)
 }
 
-func getRabbitMqChannel(envConf *server2.Config) (*amqp.Channel, error) {
+func getRabbitMqChannel(envConf *infrastructure.Config) (*amqp.Channel, error) {
 	rabbitMqInfo := fmt.Sprintf("amqp://%s:%s@%s//", envConf.RabbitMqUser, envConf.RabbitMqPass, envConf.RabbitMqHost)
 	conn, err := amqp.Dial(rabbitMqInfo)
 	if err != nil {
@@ -76,6 +82,6 @@ func runHTTPProxy(serviceAddr string, httpProxyPort string) error {
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcGWMux)
-	fmt.Println("starting http transport at " + httpProxyPort)
+	log.WithFields(log.Fields{"http port": httpProxyPort}).Info("successfully starting http transport")
 	return http.ListenAndServe(httpProxyPort, mux)
 }

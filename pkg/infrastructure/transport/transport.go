@@ -5,10 +5,11 @@ import (
 	"github.com/google/uuid"
 	"text-to-speech-translation-service/api"
 	"text-to-speech-translation-service/pkg/domain"
+	"text-to-speech-translation-service/pkg/infrastructure"
 )
 
 type TranslationServer struct {
-	DependencyContainer DependencyContainer
+	DependencyContainer infrastructure.DependencyContainer
 }
 
 func (t *TranslationServer) Translate(_ context.Context, req *api.TranslationRequest) (*api.TranslationID, error) {
@@ -16,7 +17,7 @@ func (t *TranslationServer) Translate(_ context.Context, req *api.TranslationReq
 	if err != nil {
 		return nil, err
 	}
-	translationID, err := t.DependencyContainer.newAppTranslationService().Translate(userID, req.Text)
+	translationID, err := t.DependencyContainer.NewTranslationService().Translate(userID, req.Text)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +29,7 @@ func (t *TranslationServer) GetTranslationStatus(_ context.Context, req *api.Tra
 	if err != nil {
 		return nil, err
 	}
-	status, err := t.DependencyContainer.newAppTranslationService().GetTranslationStatus(translationID)
+	status, err := t.DependencyContainer.NewTranslationService().GetTranslationStatus(translationID)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +41,7 @@ func (t *TranslationServer) GetTranslationData(_ context.Context, req *api.Trans
 	if err != nil {
 		return nil, err
 	}
-	translatedData, err := t.DependencyContainer.newAppTranslationService().GetTranslationData(translationID)
+	translatedData, err := t.DependencyContainer.NewTranslationService().GetTranslationData(translationID)
 	if err != nil {
 		return nil, err
 	}

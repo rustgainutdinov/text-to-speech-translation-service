@@ -1,4 +1,4 @@
-package app
+package dataProvider
 
 import "text-to-speech-translation-service/pkg/domain"
 

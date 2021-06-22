@@ -1,4 +1,4 @@
-package app
+package balanceService
 
 import "github.com/google/uuid"
 

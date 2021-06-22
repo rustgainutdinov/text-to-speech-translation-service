@@ -1,33 +1,31 @@
-package postgres
+package query
 
 import (
 	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
-	"text-to-speech-translation-service/pkg/app"
+	"text-to-speech-translation-service/pkg/app/dataProvider"
 )
 
 type translationQueryServiceImpl struct {
 	db pg.DBI
 }
 
-func (t *translationQueryServiceImpl) GetTranslationData(translationID uuid.UUID) (app.TranslationDTO, error) {
-	var translations []sqlxTranslationStatusAndData
-	_, err := t.db.Query(&translations, "SELECT status, translated_data, id_user, text_to_translate FROM translation WHERE id_translation=? LIMIT 1", translationID.String())
+func (t *translationQueryServiceImpl) GetTranslationData(translationID uuid.UUID) (dataProvider.TranslationDTO, error) {
+	var translationData sqlxTranslationStatusAndData
+	_, err := t.db.QueryOne(&translationData, "SELECT status, translated_data, id_user, text_to_translate FROM translation WHERE id_translation=?", translationID.String())
 	if err != nil {
 		return nil, err
 	}
-	if len(translations) == 0 {
-		return nil, app.ErrTranslationIsNotFound
-	}
+	//TODO: добавить обработку ошибки not found (ErrTranslationIsNotFound)
 	return &translation{
-		status:          translations[0].Status,
-		translatedData:  translations[0].TranslatedData,
-		idUser:          translations[0].IDUser,
-		textToTranslate: translations[0].TextToTranslate,
+		status:          translationData.Status,
+		translatedData:  translationData.TranslatedData,
+		idUser:          translationData.IDUser,
+		textToTranslate: translationData.TextToTranslate,
 	}, nil
 }
 
-func NewTranslationQueryService(db pg.DBI) app.TranslationQueryService {
+func NewTranslationQueryService(db pg.DBI) dataProvider.TranslationQueryService {
 	return &translationQueryServiceImpl{db: db}
 }
 

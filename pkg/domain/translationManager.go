@@ -5,15 +5,15 @@ import (
 )
 
 type TranslationManager interface {
-	AddTranslation(text string, userID uuid.UUID) (TranslationID, error)
-	SaveTranslatedData(translationID TranslationID, translatedData string) error
+	AddTextToTranslate(text string, userID uuid.UUID) (TranslationID, error)
+	SaveTranslation(translationID TranslationID, translatedData string) error
 }
 
 type translationManager struct {
 	translationRepo TranslationRepo
 }
 
-func (t *translationManager) AddTranslation(text string, userID uuid.UUID) (TranslationID, error) {
+func (t *translationManager) AddTextToTranslate(text string, userID uuid.UUID) (TranslationID, error) {
 	translationID := TranslationID(uuid.New())
 	translation := Translation{
 		ID:     translationID,
@@ -28,7 +28,7 @@ func (t *translationManager) AddTranslation(text string, userID uuid.UUID) (Tran
 	return translationID, nil
 }
 
-func (t *translationManager) SaveTranslatedData(translationID TranslationID, translatedData string) error {
+func (t *translationManager) SaveTranslation(translationID TranslationID, translatedData string) error {
 	translation, err := t.translationRepo.FindOne(translationID)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (t *translationManager) SaveTranslatedData(translationID TranslationID, tra
 		UserID:     translation.UserID,
 		Text:       translation.Text,
 		Status:     TranslationStatusSuccess,
-		SpeechData: translation.SpeechData,
+		SpeechData: translatedData,
 	})
 }
 
