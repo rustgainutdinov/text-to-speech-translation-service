@@ -7,13 +7,17 @@ import (
 	"text-to-speech-translation-service/pkg/app/service"
 )
 
+const (
+	rabbitMqMessageType = iota
+)
+
 type rabbitmqEventBroker struct {
 	channel *amqp.Channel
 	queue   *amqp.Queue
 }
 
 func (e *rabbitmqEventBroker) TextTranslated(userID string, score int) error {
-	rabbitMqMessage := rabbitMqMessage{Type: 0, Data: textTranslatedInfo{UserID: userID, Score: score}}
+	rabbitMqMessage := rabbitMqMessage{Type: rabbitMqMessageType, Data: textTranslatedInfo{UserID: userID, Score: score}}
 	body, err := json.Marshal(rabbitMqMessage)
 	if err != nil {
 		return err
