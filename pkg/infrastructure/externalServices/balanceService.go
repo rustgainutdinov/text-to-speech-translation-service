@@ -1,4 +1,4 @@
-package balanceService
+package externalServices
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	balanceService2 "text-to-speech-translation-service/pkg/app/externalService/balanceService"
+	"text-to-speech-translation-service/pkg/app/service"
 )
 
 const canWriteOffUrl = "/api/v1/balance/canWriteOff"
@@ -33,7 +33,7 @@ func (b *balanceService) CanWriteOf(userID uuid.UUID, score int) (bool, error) {
 	return response.Result, nil
 }
 
-func NewBalanceService(balanceServiceAddress string) balanceService2.BalanceService {
+func NewBalanceService(balanceServiceAddress string) service.BalanceService {
 	return &balanceService{balanceServiceAddress: balanceServiceAddress}
 }
 

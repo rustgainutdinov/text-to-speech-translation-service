@@ -5,7 +5,6 @@ import (
 	"github.com/google/uuid"
 	"text-to-speech-translation-service/pkg/app"
 	"text-to-speech-translation-service/pkg/app/dataProvider"
-	balanceService2 "text-to-speech-translation-service/pkg/app/externalService/balanceService"
 	"text-to-speech-translation-service/pkg/domain"
 )
 
@@ -15,10 +14,14 @@ type TranslationService interface {
 	GetTranslationStatus(translationID uuid.UUID) (int, error)
 }
 
+type BalanceService interface {
+	CanWriteOf(userID uuid.UUID, score int) (bool, error)
+}
+
 type translationService struct {
 	unitOfWorkFactory       dataProvider.UnitOfWorkFactory
 	translationQueue        app.Queue
-	balanceService          balanceService2.BalanceService
+	balanceService          BalanceService
 	translationQueryService dataProvider.TranslationQueryService
 }
 
@@ -66,7 +69,7 @@ func (b *translationService) GetTranslationStatus(translationID uuid.UUID) (int,
 	return translationDTO.Status(), nil
 }
 
-func NewTranslationService(unitOfWorkFactory dataProvider.UnitOfWorkFactory, translationQueue app.Queue, balanceService balanceService2.BalanceService, translationQueryService dataProvider.TranslationQueryService) TranslationService {
+func NewTranslationService(unitOfWorkFactory dataProvider.UnitOfWorkFactory, translationQueue app.Queue, balanceService BalanceService, translationQueryService dataProvider.TranslationQueryService) TranslationService {
 	return &translationService{
 		unitOfWorkFactory:       unitOfWorkFactory,
 		translationQueue:        translationQueue,
