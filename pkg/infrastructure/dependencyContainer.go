@@ -51,7 +51,7 @@ func (d *dependencyContainer) newTranslationQueryService() query2.TranslationQue
 }
 
 func (d *dependencyContainer) newExternalEventBroker() (service.ExternalEventBroker, error) {
-	q, err := d.rabbitMqChannel.QueueDeclare("textTranslated", true, false, false, false, nil)
+	q, err := d.rabbitMqChannel.QueueDeclare("translationQueue", true, false, false, false, nil)
 	if err != nil {
 		return nil, err
 	}

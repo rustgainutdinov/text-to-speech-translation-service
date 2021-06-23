@@ -13,8 +13,8 @@ type rabbitmqEventBroker struct {
 }
 
 func (e *rabbitmqEventBroker) TextTranslated(userID string, score int) error {
-	translatedInfo := textTranslatedInfo{UserID: userID, Score: score}
-	body, err := json.Marshal(translatedInfo)
+	rabbitMqMessage := rabbitMqMessage{Type: 0, Data: textTranslatedInfo{UserID: userID, Score: score}}
+	body, err := json.Marshal(rabbitMqMessage)
 	if err != nil {
 		return err
 	}
@@ -32,6 +32,11 @@ func (e *rabbitmqEventBroker) TextTranslated(userID string, score int) error {
 
 func NewRabbitmqEventBroker(channel *amqp.Channel, queue *amqp.Queue) service.ExternalEventBroker {
 	return &rabbitmqEventBroker{channel: channel, queue: queue}
+}
+
+type rabbitMqMessage struct {
+	Type int         `json:"type"`
+	Data interface{} `json:"data"`
 }
 
 type textTranslatedInfo struct {

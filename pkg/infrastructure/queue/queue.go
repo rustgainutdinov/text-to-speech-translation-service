@@ -41,7 +41,7 @@ func (s *queue) Start() {
 					log.WithFields(log.Fields{"task": task}).Error(err)
 				}
 				log.Info("task handled successfully")
-				time.Sleep(1 * time.Second)
+				time.Sleep(10 * time.Second)
 			}
 		default:
 			time.Sleep(1 * time.Second)
