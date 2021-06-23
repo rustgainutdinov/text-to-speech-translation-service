@@ -36,17 +36,11 @@ func run() error {
 }
 
 func runGRPCService(envConf *infrastructure.Config) error {
-	db := pg.Connect(&pg.Options{
-		User:     envConf.DBUser,
-		Password: envConf.DBPass,
-		Addr:     envConf.DBHost + ":" + envConf.DBPort,
-		Database: envConf.DBName,
-	})
 	rabbitMqChannel, err := getRabbitMqChannel(envConf)
 	if err != nil {
 		return err
 	}
-	dependencyContainer, err := infrastructure.NewDependencyContainer(db, *envConf, rabbitMqChannel)
+	dependencyContainer, err := infrastructure.NewDependencyContainer(getDataBaseConnect(envConf), *envConf, rabbitMqChannel)
 	if err != nil {
 		return err
 	}
@@ -60,11 +54,13 @@ func runGRPCService(envConf *infrastructure.Config) error {
 	return server.Serve(lis)
 }
 
-func makeGRPCUnaryInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		resp, err = handler(ctx, req)
-		return resp, server2.TranslateError(err)
-	}
+func getDataBaseConnect(envConf *infrastructure.Config) pg.DBI {
+	return pg.Connect(&pg.Options{
+		User:     envConf.DBUser,
+		Password: envConf.DBPass,
+		Addr:     envConf.DBHost + ":" + envConf.DBPort,
+		Database: envConf.DBName,
+	})
 }
 
 func getRabbitMqChannel(envConf *infrastructure.Config) (*amqp.Channel, error) {
@@ -74,6 +70,13 @@ func getRabbitMqChannel(envConf *infrastructure.Config) (*amqp.Channel, error) {
 		return nil, err
 	}
 	return conn.Channel()
+}
+
+func makeGRPCUnaryInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		resp, err = handler(ctx, req)
+		return resp, server2.TranslateError(err)
+	}
 }
 
 func runHTTPProxy(serviceAddr string, httpProxyPort string) error {
